@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GrandPerspectiveScanDump appVersion="3.6.2" formatVersion="7">
+  <ScanInfo volumePath="/" volumeSize="1000000" freeSpace="500000" scanTime="2026-01-19 00:00:00 +0000" fileSizeMeasure="logical">
+    <Folder name="/">
+      <Folder name="home">
+        <File name="fileA.bin" size="400000" />
+        <File name="fileB.log" size="100000" />
+      </Folder>
+      <Folder name="var">
+        <File name="cache.dat" size="200000" />
+      </Folder>
+      <File name="boot.img" size="300000" />
+    </Folder>
+  </ScanInfo>
+</GrandPerspectiveScanDump>
