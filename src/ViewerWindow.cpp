@@ -1,11 +1,14 @@
 #include "ViewerWindow.h"
 
 #include <QAction>
+#include <QComboBox>
 #include <QFileDialog>
+#include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QStatusBar>
+#include <QToolBar>
 
 #include "CanvasWidget.h"
 #include "TreeLayout.h"
@@ -17,28 +20,69 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   setWindowTitle("gpscan_viewer");
   setCentralWidget(canvas);
 
-  auto *fileMenu = menuBar()->addMenu(tr("&File"));
-  QAction *openAction = fileMenu->addAction(tr("&Open..."));
+  // Create toolbar
+  toolBar = addToolBar(tr("Main Toolbar"));
+  toolBar->setMovable(false);
+  toolBar->setIconSize(QSize(24, 24));
+
+  // Open action with icon
+  QAction *openAction = new QAction(style()->standardIcon(QStyle::SP_DialogOpenButton), tr("Open"), this);
   openAction->setShortcut(QKeySequence::Open);
-  QAction *reloadAction = fileMenu->addAction(tr("&Reload"));
+  openAction->setToolTip(tr("Open scan data file"));
+  toolBar->addAction(openAction);
+
+  // Reload action with icon
+  QAction *reloadAction = new QAction(style()->standardIcon(QStyle::SP_BrowserReload), tr("Reload"), this);
   reloadAction->setShortcut(QKeySequence::Refresh);
+  reloadAction->setToolTip(tr("Reload current file"));
+  toolBar->addAction(reloadAction);
+
+  toolBar->addSeparator();
+
+  // Color mapping selector
+  toolBar->addWidget(new QLabel(tr("Color by: "), this));
+  colorMappingCombo = new QComboBox(this);
+  colorMappingCombo->addItem(tr("Extension"));
+  colorMappingCombo->addItem(tr("Name"));
+  colorMappingCombo->addItem(tr("Folder"));
+  colorMappingCombo->addItem(tr("Top Folder"));
+  colorMappingCombo->addItem(tr("Level"));
+  colorMappingCombo->addItem(tr("Nothing"));
+  colorMappingCombo->setCurrentIndex(0); // Default: Extension
+  colorMappingCombo->setToolTip(tr("Color mapping scheme"));
+  toolBar->addWidget(colorMappingCombo);
+
+  toolBar->addSeparator();
+
+  // Recompute layout action
+  QAction *recomputeAction = new QAction(style()->standardIcon(QStyle::SP_BrowserReload), tr("Recompute"), this);
+  recomputeAction->setShortcut(Qt::Key_F5);
+  recomputeAction->setToolTip(tr("Recompute layout"));
+  toolBar->addAction(recomputeAction);
+
+  // Menus
+  auto *fileMenu = menuBar()->addMenu(tr("&File"));
+  fileMenu->addAction(openAction);
+  fileMenu->addAction(reloadAction);
   fileMenu->addSeparator();
   QAction *quitAction = fileMenu->addAction(tr("&Quit"));
   quitAction->setShortcut(QKeySequence::Quit);
 
   auto *viewMenu = menuBar()->addMenu(tr("&View"));
-  QAction *recomputeAction = viewMenu->addAction(tr("&Recompute Layout"));
-  recomputeAction->setShortcut(Qt::Key_F5);
+  viewMenu->addAction(recomputeAction);
 
   auto *helpMenu = menuBar()->addMenu(tr("&Help"));
   QAction *aboutAction = helpMenu->addAction(tr("&About"));
 
+  // Connections
   connect(openAction, &QAction::triggered, this, &ViewerWindow::openFile);
   connect(reloadAction, &QAction::triggered, this, &ViewerWindow::reloadFile);
   connect(quitAction, &QAction::triggered, this, &ViewerWindow::close);
   connect(recomputeAction, &QAction::triggered, this, &ViewerWindow::recomputeLayout);
   connect(aboutAction, &QAction::triggered, this, &ViewerWindow::showAbout);
   connect(canvas, &CanvasWidget::selectedNodeChanged, this, &ViewerWindow::updateSelection);
+  connect(colorMappingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+          this, &ViewerWindow::changeColorMapping);
 
   statusBar()->showMessage(tr("Ready"));
 }
@@ -93,6 +137,11 @@ void ViewerWindow::showAbout() {
   QMessageBox::about(this,
                      tr("About gpscan_viewer"),
                      tr("Minimal viewer for GrandPerspective scan data (XML/gpscan)."));
+}
+
+void ViewerWindow::changeColorMapping(int index) {
+  CanvasWidget::ColorMappingMode mode = static_cast<CanvasWidget::ColorMappingMode>(index);
+  canvas->setColorMappingMode(mode);
 }
 
 void ViewerWindow::setModel(std::shared_ptr<TreeModel> model, const QString &sourcePath) {

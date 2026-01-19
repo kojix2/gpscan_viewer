@@ -6,6 +6,8 @@
 #include "TreeModel.h"
 
 class CanvasWidget;
+class QToolBar;
+class QComboBox;
 
 class ViewerWindow : public QMainWindow {
   Q_OBJECT
@@ -19,12 +21,15 @@ private slots:
   void recomputeLayout();
   void showAbout();
   void updateSelection(TreeNode *node);
+  void changeColorMapping(int index);
 
 private:
   void setModel(std::shared_ptr<TreeModel> model, const QString &sourcePath);
   void showError(const QString &message);
 
   CanvasWidget *canvas = nullptr;
+  QToolBar *toolBar = nullptr;
+  QComboBox *colorMappingCombo = nullptr;
   std::shared_ptr<TreeModel> currentModel;
   QString currentPath;
 };
