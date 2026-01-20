@@ -1,1 +1,33 @@
-build
+## Build directories
+build/
+cmake-build-*/
+
+## CMake generated files
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+
+## Packaging artifacts
+*.deb
+*.rpm
+*.tar.gz
+*.zip
+
+## Editor/IDE
+.vscode/
+.idea/
+.clangd/
+.cache/
+.ruby-lsp/
+*.swp
+*~
+
+## OS files
+.DS_Store
+Thumbs.db

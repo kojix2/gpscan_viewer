@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(gpscan_viewer LANGUAGES CXX)
+project(gpscan_viewer VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,6 +10,8 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Core)
 find_package(ZLIB REQUIRED)
+
+include(GNUInstallDirs)
 
 enable_testing()
 
@@ -25,6 +27,22 @@ add_executable(gpscan_viewer
 
 target_link_libraries(gpscan_viewer PRIVATE Qt6::Widgets ZLIB::ZLIB)
 
+install(TARGETS gpscan_viewer
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(FILES resources/sample.xml
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/gpscan_viewer
+)
+
+install(FILES resources/gpscan_viewer.desktop
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+)
+
+install(FILES resources/gpscan_viewer.svg
+  DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+)
+
 add_executable(gpscan_viewer_tests
   tests/TestMain.cpp
   src/TreeLayout.cpp
@@ -37,3 +55,17 @@ target_include_directories(gpscan_viewer_tests PRIVATE src)
 target_link_libraries(gpscan_viewer_tests PRIVATE Qt6::Core ZLIB::ZLIB)
 
 add_test(NAME gpscan_viewer_tests COMMAND gpscan_viewer_tests)
+
+set(CPACK_PACKAGE_NAME "gpscan_viewer")
+set(CPACK_PACKAGE_VENDOR "gpscan_viewer")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_CONTACT "maintainer@example.com")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Viewer for GrandPerspective scan files")
+set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
+set(CPACK_GENERATOR "DEB;RPM")
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "maintainer@example.com")
+set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+set(CPACK_RPM_PACKAGE_LICENSE "Unknown")
+set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+include(CPack)

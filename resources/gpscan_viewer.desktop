@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=GPS Scan Viewer
+Exec=gpscan_viewer
+Icon=gpscan_viewer
+Categories=Utility;Visualization;
+Terminal=false
+StartupNotify=true
