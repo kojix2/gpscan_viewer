@@ -6,10 +6,10 @@
 
 namespace Utils {
 
-// バイト数を人間が読みやすい形式に変換 (例: 1024 → "1.0 KB")
+// Convert bytes to a human-readable format (e.g., 1024 -> "1.0 KB")
 QString formatSize(quint64 bytes);
 
-// ノードのフルパスを構築
+// Build the full path for a node
 QString buildFullPath(const TreeNode *node);
 
 } // namespace Utils

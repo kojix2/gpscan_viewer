@@ -44,7 +44,7 @@ QString buildFullPath(const TreeNode *node) {
     return QStringLiteral("/");
   }
 
-  // ルートが "/" の場合、重複を避ける
+  // Avoid duplication when the root is "/".
   if (parts.first() == QStringLiteral("/")) {
     if (parts.size() == 1) {
       return QStringLiteral("/");
