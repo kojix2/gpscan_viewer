@@ -36,7 +36,7 @@ protected:
 private:
   QColor colorForNode(const TreeNode *node, int depth) const;
 
-  // Draw rectangle with symmetric bevel shading ("chocolate block" style)
+  // Draw rectangle with GrandPerspective-style two-triangle gradient
   void drawBevelRect(QImage &image, const QRectF &rect, const QColor &base);
   
   void drawNode(QImage &image, TreeNode *node, int depth);

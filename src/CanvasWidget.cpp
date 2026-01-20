@@ -6,6 +6,7 @@
 #include <QToolTip>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 #include "TreeLayout.h"
@@ -13,21 +14,63 @@
 
 namespace {
 
+constexpr int kGradientSteps = 256;
+
+std::array<QRgb, kGradientSteps> buildGradientColors(const QColor &base, double colorGradient) {
+  std::array<QRgb, kGradientSteps> colors{};
+
+  float hue = 0.0f;
+  float saturation = 0.0f;
+  float brightness = 0.0f;
+  float alpha = 1.0f;
+  QColor hsv = base.toHsv();
+  hsv.getHsvF(&hue, &saturation, &brightness, &alpha);
+  if (hue < 0.0f) {
+    hue = 0.0f;
+  }
+
+  auto clamp01 = [](double v) { return std::clamp(v, 0.0, 1.0); };
+
+  // Darker colors (0..127)
+  for (int j = 0; j < 128; ++j) {
+    double adjust = colorGradient * (128.0 - static_cast<double>(j)) / 128.0;
+    double b = clamp01(static_cast<double>(brightness) * (1.0 - adjust));
+    QColor mod = QColor::fromHsvF(hue, clamp01(saturation), b, clamp01(alpha));
+    colors[j] = mod.rgb();
+  }
+
+  // Lighter colors (128..255)
+  for (int j = 0; j < 128; ++j) {
+    double adjust = colorGradient * static_cast<double>(j) / 128.0;
+    double dif = 1.0 - static_cast<double>(brightness);
+    double absAdjust = (dif + saturation) * adjust;
+    double b = brightness;
+    double s = saturation;
+
+    if (absAdjust < dif) {
+      b = clamp01(static_cast<double>(brightness) + absAdjust);
+    } else {
+      s = clamp01(saturation + dif - absAdjust);
+      b = 1.0;
+    }
+
+    QColor mod = QColor::fromHsvF(hue, clamp01(s), clamp01(b), clamp01(alpha));
+    colors[128 + j] = mod.rgb();
+  }
+
+  return colors;
+}
+
 QVector<QColor> defaultPalette() {
-  // Colors similar to GrandPerspective's default palette
+  // Original GrandPerspective default palette: CoffeeBeans
   return {
-      QColor(0xE6, 0x4B, 0x3C), // red
-      QColor(0xF5, 0xA6, 0x23), // orange
-      QColor(0xF8, 0xE7, 0x1C), // yellow
-      QColor(0x7E, 0xD3, 0x21), // green
-      QColor(0x50, 0xE3, 0xC2), // cyan
-      QColor(0x4A, 0x90, 0xE2), // blue
-      QColor(0xBD, 0x10, 0xE0), // purple
-      QColor(0xD0, 0x02, 0x1B), // crimson
-      QColor(0x8B, 0x57, 0x2A), // brown
-      QColor(0x41, 0x41, 0x41), // gray
-      QColor(0x90, 0xA4, 0xAE), // light gray
-      QColor(0x7B, 0x8D, 0x8E)  // dark gray
+      QColor(0x66, 0x66, 0x00), // 666600
+      QColor(0x99, 0x33, 0x00), // 993300
+      QColor(0xCC, 0x66, 0x66), // CC6666
+      QColor(0xCC, 0x66, 0x33), // CC6633
+      QColor(0xFF, 0xCC, 0x66), // FFCC66
+      QColor(0xCC, 0x99, 0x33), // CC9933
+      QColor(0xCC, 0x33, 0x33)  // CC3333
   };
 }
 
@@ -141,42 +184,45 @@ void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor
   const int imgWidth = image.width();
   const int imgHeight = image.height();
 
-  // Symmetric bevel ("chocolate block"):
-  // - darker near edges
-  // - same shading in all directions (no diagonal / directional lighting)
-  const double invW = 1.0 / static_cast<double>(rectWidth);
-  const double invH = 1.0 / static_cast<double>(rectHeight);
+  // GrandPerspective original algorithm: two triangles filled by horizontal and vertical
+  // gradient lines, using a gradient palette derived from the base color.
+  constexpr double kDefaultColorGradient = 0.5;
+  const auto gradientColors = buildGradientColors(base, kDefaultColorGradient);
 
-  const double edgeFade = 0.07;         // normalized edge-distance units
-  const double edgeDarkStrength = 0.62; // 0..1
+  QRgb *data = reinterpret_cast<QRgb *>(image.bits());
+  const int stride = image.bytesPerLine() / static_cast<int>(sizeof(QRgb));
 
-  const int baseR = base.red();
-  const int baseG = base.green();
-  const int baseB = base.blue();
+  auto setPixel = [&](int x, int y, QRgb color) {
+    if (x < 0 || x >= imgWidth || y < 0 || y >= imgHeight) {
+      return;
+    }
+    data[y * stride + x] = color;
+  };
 
-  const int startX = std::max(0, x0);
-  const int endX = std::min(imgWidth, x0 + rectWidth);
-  const int startY = std::max(0, y0);
-  const int endY = std::min(imgHeight, y0 + rectHeight);
+  // Horizontal lines: upper-left triangle
+  for (int y = 0; y < rectHeight; ++y) {
+    double gradient = 256.0 * (y0 + y + 0.5 - rect.y()) / rect.height();
+    int gradientIndex = std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
+    QRgb color = gradientColors[gradientIndex];
 
-  for (int imgY = startY; imgY < endY; ++imgY) {
-    const int y = imgY - y0;
-    QRgb *scanline = reinterpret_cast<QRgb *>(image.scanLine(imgY));
-    const double v = (static_cast<double>(y) + 0.5) * invH;
+    int maxX = (rectHeight - y - 1) * rectWidth / rectHeight;
+    int yWrite = imgHeight - y0 - y - 1; // Match original bitmap's flipped Y-axis
+    for (int x = 0; x < maxX; ++x) {
+      setPixel(x0 + x, yWrite, color);
+    }
+  }
 
-    for (int imgX = startX; imgX < endX; ++imgX) {
-      const int x = imgX - x0;
-      const double u = (static_cast<double>(x) + 0.5) * invW;
+  // Vertical lines: lower-right triangle
+  for (int x = 0; x < rectWidth; ++x) {
+    double gradient = 256.0 * (1.0 - (x0 + x + 0.5 - rect.x()) / rect.width());
+    int gradientIndex = std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
+    QRgb color = gradientColors[gradientIndex];
 
-      // Distance to nearest edge
-      const double edgeDist = std::min({u, v, 1.0 - u, 1.0 - v});
-      const double edge = std::clamp(1.0 - (edgeDist / edgeFade), 0.0, 1.0);
-
-      const double factor = std::clamp(1.0 - edgeDarkStrength * edge, 0.0, 1.0);
-      const int r = std::clamp(static_cast<int>(std::lround(baseR * factor)), 0, 255);
-      const int g = std::clamp(static_cast<int>(std::lround(baseG * factor)), 0, 255);
-      const int b = std::clamp(static_cast<int>(std::lround(baseB * factor)), 0, 255);
-      scanline[imgX] = qRgb(r, g, b);
+    int minY = (rectWidth - x - 1) * rectHeight / rectWidth;
+    int startY = imgHeight - y0 - rectHeight;
+    int rows = rectHeight - minY;
+    for (int y = 0; y < rows; ++y) {
+      setPixel(x0 + x, startY + y, color);
     }
   }
 }
