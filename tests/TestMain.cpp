@@ -111,6 +111,14 @@ bool testTreeLayout() {
   ok &= expectTrue(root->rect.contains(childA->rect), "root contains childA");
   ok &= expectTrue(root->rect.contains(childB->rect), "root contains childB");
 
+  // Orientation check (GrandPerspective-compatible): larger item should be placed
+  // towards the top-left compared to smaller items.
+  ok &= expectTrue(childA->rect.center().x() < childB->rect.center().x(), "A is left of B");
+
+  // Vertical split case: larger item should be above smaller item.
+  TreeLayout::layout(root, QRectF(0, 0, 50, 100));
+  ok &= expectTrue(childA->rect.center().y() < childB->rect.center().y(), "A is above B");
+
   TreeModel::deleteSubtree(root);
   return ok;
 }

@@ -6,6 +6,22 @@
 
 namespace {
 
+void mirrorRects(TreeNode *node, const QRectF &rootBounds) {
+  if (!node) {
+    return;
+  }
+
+  const QRectF r = node->rect;
+  const double newX = rootBounds.x() + rootBounds.width() - (r.x() - rootBounds.x()) - r.width();
+  const double newY =
+      rootBounds.y() + rootBounds.height() - (r.y() - rootBounds.y()) - r.height();
+  node->rect = QRectF(newX, newY, r.width(), r.height());
+
+  for (TreeNode *child : node->children) {
+    mirrorRects(child, rootBounds);
+  }
+}
+
 struct LayoutNode {
   TreeNode *leaf = nullptr;
   LayoutNode *left = nullptr;
@@ -184,4 +200,7 @@ void layoutGroup(const QVector<TreeNode *> &items, const QRectF &bounds,
 void TreeLayout::layout(TreeNode *root, const QRectF &bounds) {
   std::vector<std::unique_ptr<LayoutNode>> storage;
   layoutNode(root, bounds, storage);
+
+  // GrandPerspective-compatible orientation: mirror both X and Y within the root bounds.
+  mirrorRects(root, bounds);
 }

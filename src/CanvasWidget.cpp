@@ -128,38 +128,7 @@ void CanvasWidget::updateTooltip(const QPointF &pos) {
   }
 }
 
-void CanvasWidget::buildGradientTable(const QColor &base, QVector<QRgb> &table) const {
-  table.resize(256);
-
-  float h = 0.0f, s = 0.0f, v = 0.0f, a = 1.0f;
-  base.getHsvF(&h, &s, &v, &a);
-
-  // 0-127: darker colors (decrease brightness)
-  for (int j = 0; j < 128; ++j) {
-    float adjust = static_cast<float>(gradientStrength) * static_cast<float>(128 - j) / 128.0f;
-    float newV = v * (1.0f - adjust);
-    QColor modColor = QColor::fromHsvF(h, s, std::max(0.0f, newV), a);
-    table[j] = modColor.rgb();
-  }
-
-  // 128-255: lighter colors (increase brightness, then decrease saturation)
-  for (int j = 0; j < 128; ++j) {
-    float adjust = static_cast<float>(gradientStrength) * static_cast<float>(j) / 128.0f;
-    float dif = 1.0f - v;
-    float absAdjust = (dif + s) * adjust;
-
-    QColor modColor;
-    if (absAdjust < dif) {
-      modColor = QColor::fromHsvF(h, s, std::min(1.0f, v + absAdjust), a);
-    } else {
-      modColor = QColor::fromHsvF(h, std::max(0.0f, s + dif - absAdjust), 1.0f, a);
-    }
-    table[128 + j] = modColor.rgb();
-  }
-}
-
-void CanvasWidget::drawGradientRect(QImage &image, const QRectF &rect,
-                                    const QVector<QRgb> &gradientTable) {
+void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor &base) {
   int x0 = static_cast<int>(rect.x() + 0.5);
   int y0 = static_cast<int>(rect.y() + 0.5);
   int rectWidth = static_cast<int>(rect.x() + rect.width() + 0.5) - x0;
@@ -172,15 +141,18 @@ void CanvasWidget::drawGradientRect(QImage &image, const QRectF &rect,
   const int imgWidth = image.width();
   const int imgHeight = image.height();
 
-  // Metallic style (GrandPerspective-like):
-  // - darker edges
-  // - slight shading from top-left (brighter) to bottom-right (darker)
+  // Symmetric bevel ("chocolate block"):
+  // - darker near edges
+  // - same shading in all directions (no diagonal / directional lighting)
   const double invW = 1.0 / static_cast<double>(rectWidth);
   const double invH = 1.0 / static_cast<double>(rectHeight);
 
-  const double edgeFade = 0.20;            // in normalized edge-distance units
-  const double edgeDarkStrength = 0.55;    // 0..1
-  const double directionalStrength = 0.18; // 0..1
+  const double edgeFade = 0.07;         // normalized edge-distance units
+  const double edgeDarkStrength = 0.62; // 0..1
+
+  const int baseR = base.red();
+  const int baseG = base.green();
+  const int baseB = base.blue();
 
   const int startX = std::max(0, x0);
   const int endX = std::min(imgWidth, x0 + rectWidth);
@@ -200,13 +172,11 @@ void CanvasWidget::drawGradientRect(QImage &image, const QRectF &rect,
       const double edgeDist = std::min({u, v, 1.0 - u, 1.0 - v});
       const double edge = std::clamp(1.0 - (edgeDist / edgeFade), 0.0, 1.0);
 
-      // Directional shading: brighter near top-left
-      const double shade = (0.5 - 0.5 * (u + v)); // + at TL, - at BR
-
-      // Map the combined effect into the 256-step gradient table (centered at 128).
-      const double offset = (directionalStrength * shade) - (edgeDarkStrength * edge);
-      const int index = std::clamp(static_cast<int>(std::lround(128.0 + offset * 127.0)), 0, 255);
-      scanline[imgX] = gradientTable[static_cast<size_t>(index)];
+      const double factor = std::clamp(1.0 - edgeDarkStrength * edge, 0.0, 1.0);
+      const int r = std::clamp(static_cast<int>(std::lround(baseR * factor)), 0, 255);
+      const int g = std::clamp(static_cast<int>(std::lround(baseG * factor)), 0, 255);
+      const int b = std::clamp(static_cast<int>(std::lround(baseB * factor)), 0, 255);
+      scanline[imgX] = qRgb(r, g, b);
     }
   }
 }
@@ -222,10 +192,7 @@ void CanvasWidget::drawNode(QImage &image, TreeNode *node, int depth) {
   }
 
   QColor base = colorForNode(node, depth);
-  QVector<QRgb> gradientTable;
-  buildGradientTable(base, gradientTable);
-
-  drawGradientRect(image, node->rect, gradientTable);
+  drawBevelRect(image, node->rect, base);
 
   for (TreeNode *child : node->children) {
     drawNode(image, child, depth + 1);

@@ -35,12 +35,9 @@ protected:
 
 private:
   QColor colorForNode(const TreeNode *node, int depth) const;
-  
-  // Build a 256-level gradient color table (GrandPerspective style)
-  void buildGradientTable(const QColor &base, QVector<QRgb> &table) const;
-  
-  // Draw rectangle with diagonal gradient (GrandPerspective style)
-  void drawGradientRect(QImage &image, const QRectF &rect, const QVector<QRgb> &gradientTable);
+
+  // Draw rectangle with symmetric bevel shading ("chocolate block" style)
+  void drawBevelRect(QImage &image, const QRectF &rect, const QColor &base);
   
   void drawNode(QImage &image, TreeNode *node, int depth);
   void drawSelection(QPainter &painter, TreeNode *node);
@@ -51,6 +48,5 @@ private:
   TreeNode *selectedNode = nullptr;
   TreeNode *hoveredNode = nullptr;
   QVector<QColor> palette;
-  double gradientStrength = 0.5;
   ColorMappingMode colorMappingMode = ColorMappingMode::Extension;
 };
