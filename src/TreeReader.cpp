@@ -1,5 +1,6 @@
 #include "TreeReader.h"
 
+#include <QDir>
 #include <QFile>
 #include <QXmlStreamReader>
 
@@ -95,12 +96,18 @@ std::shared_ptr<TreeModel> TreeReader::readFromFile(const QString &path, QString
   QXmlStreamReader xml(xmlData);
   auto model = std::make_shared<TreeModel>();
   QVector<TreeNode *> stack;
+  QString volumePath;
 
   while (!xml.atEnd()) {
     xml.readNext();
 
     if (xml.isStartElement()) {
       const QString elementName = xml.name().toString();
+      if (elementName == QLatin1String("ScanInfo")) {
+        const QXmlStreamAttributes attrs = xml.attributes();
+        volumePath = attrs.value(QLatin1String("volumePath")).toString();
+        volumePath = QDir::cleanPath(volumePath);
+      }
       if (isTreeElement(elementName)) {
         const bool isDir = (elementName == QLatin1String("Folder"));
         const QXmlStreamAttributes attrs = xml.attributes();
@@ -114,6 +121,14 @@ std::shared_ptr<TreeModel> TreeReader::readFromFile(const QString &path, QString
           node->parent = stack.last();
           stack.last()->children.push_back(node);
         } else {
+          if (!volumePath.isEmpty()) {
+            const QString rootName = node->name.trimmed();
+            if (rootName.isEmpty() || rootName == QLatin1String("/")) {
+              node->name = volumePath;
+            } else if (!QDir::isAbsolutePath(rootName)) {
+              node->name = QDir(volumePath).filePath(rootName);
+            }
+          }
           model->setRoot(node);
         }
 

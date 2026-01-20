@@ -1,9 +1,16 @@
 #include "CanvasWidget.h"
 
+#include <QClipboard>
+#include <QContextMenuEvent>
+#include <QDesktopServices>
+#include <QFileInfo>
+#include <QGuiApplication>
 #include <QImage>
 #include <QMouseEvent>
+#include <QMenu>
 #include <QPainter>
 #include <QToolTip>
+#include <QUrl>
 
 #include <algorithm>
 #include <array>
@@ -123,7 +130,7 @@ void CanvasWidget::mousePressEvent(QMouseEvent *event) {
     return;
   }
 
-  TreeNode *hit = findNode(model->root(), event->position());
+  TreeNode *hit = findNode(model->root(), mapToLayout(event->position()));
   if (hit != selectedNode) {
     selectedNode = hit;
     emit selectedNodeChanged(selectedNode);
@@ -152,23 +159,85 @@ bool CanvasWidget::event(QEvent *event) {
   return QWidget::event(event);
 }
 
-void CanvasWidget::updateTooltip(const QPointF &pos) {
+void CanvasWidget::contextMenuEvent(QContextMenuEvent *event) {
+  if (!model || !model->root()) {
+    return;
+  }
+
+  TreeNode *hit = findNode(model->root(), mapToLayout(event->pos()));
+  if (!hit) {
+    return;
+  }
+
+  if (hit != selectedNode) {
+    selectedNode = hit;
+    emit selectedNodeChanged(selectedNode);
+    update();
+  }
+
+  showContextMenu(event->globalPos(), hit);
+}
+
+void CanvasWidget::updateTooltip(const QPointF &rawPos) {
   if (!model || !model->root()) {
     QToolTip::hideText();
     return;
   }
 
-  TreeNode *node = findNode(model->root(), pos);
+  const QPointF layoutPos = mapToLayout(rawPos);
+  TreeNode *node = findNode(model->root(), layoutPos);
   if (node && node != hoveredNode) {
     hoveredNode = node;
     QString fullPath = Utils::buildFullPath(node);
     QString sizeText = Utils::formatSize(node->size);
     QString tip = QString("%1\n%2").arg(fullPath, sizeText);
-    QToolTip::showText(mapToGlobal(pos.toPoint()), tip, this);
+    QToolTip::showText(mapToGlobal(rawPos.toPoint()), tip, this);
   } else if (!node) {
     hoveredNode = nullptr;
     QToolTip::hideText();
   }
+}
+
+void CanvasWidget::showContextMenu(const QPoint &globalPos, TreeNode *node) {
+  if (!node) {
+    return;
+  }
+
+  const QString fullPath = Utils::buildFullPath(node);
+  if (fullPath.isEmpty()) {
+    return;
+  }
+
+  QFileInfo info(fullPath);
+  const QString revealPath = info.isDir() ? info.absoluteFilePath() : info.absolutePath();
+
+  QMenu menu(this);
+
+  QAction *openAction = menu.addAction(tr("Open"));
+  QAction *revealAction = menu.addAction(tr("Reveal"));
+  QAction *copyPathAction = menu.addAction(tr("Copy Path"));
+
+  openAction->setEnabled(!fullPath.isEmpty());
+  revealAction->setEnabled(!revealPath.isEmpty());
+  copyPathAction->setEnabled(!fullPath.isEmpty());
+
+  connect(openAction, &QAction::triggered, this, [fullPath]() {
+    QDesktopServices::openUrl(QUrl::fromLocalFile(fullPath));
+  });
+  connect(revealAction, &QAction::triggered, this, [revealPath]() {
+    QDesktopServices::openUrl(QUrl::fromLocalFile(revealPath));
+  });
+  connect(copyPathAction, &QAction::triggered, this, [fullPath]() {
+    if (auto *clipboard = QGuiApplication::clipboard()) {
+      clipboard->setText(fullPath);
+    }
+  });
+
+  menu.exec(globalPos);
+}
+
+QPointF CanvasWidget::mapToLayout(const QPointF &pos) const {
+  return QPointF(pos.x(), height() - pos.y());
 }
 
 void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor &base) {
@@ -250,7 +319,9 @@ void CanvasWidget::drawSelection(QPainter &painter, TreeNode *node) {
 
   painter.setPen(QPen(Qt::yellow, 2));
   painter.setBrush(Qt::NoBrush);
-  painter.drawRect(node->rect.adjusted(1, 1, -1, -1));
+  QRectF rect = node->rect;
+  rect.moveTop(height() - rect.y() - rect.height());
+  painter.drawRect(rect.adjusted(1, 1, -1, -1));
 }
 
 QColor CanvasWidget::colorForNode(const TreeNode *node, int depth) const {

@@ -32,6 +32,7 @@ protected:
   void mouseMoveEvent(QMouseEvent *event) override;
   void resizeEvent(QResizeEvent *event) override;
   bool event(QEvent *event) override;
+  void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
   QColor colorForNode(const TreeNode *node, int depth) const;
@@ -42,7 +43,9 @@ private:
   void drawNode(QImage &image, TreeNode *node, int depth);
   void drawSelection(QPainter &painter, TreeNode *node);
   TreeNode *findNode(TreeNode *node, const QPointF &pos);
-  void updateTooltip(const QPointF &pos);
+  void updateTooltip(const QPointF &rawPos);
+  void showContextMenu(const QPoint &globalPos, TreeNode *node);
+  QPointF mapToLayout(const QPointF &pos) const;
 
   std::shared_ptr<TreeModel> model;
   TreeNode *selectedNode = nullptr;
