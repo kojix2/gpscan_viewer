@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=GPS Scan Viewer
+Name=GPScan Viewer
 Exec=gpscan_viewer
 Icon=gpscan_viewer
 Categories=Utility;Visualization;
