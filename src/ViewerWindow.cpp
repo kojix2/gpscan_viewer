@@ -1,6 +1,7 @@
 #include "ViewerWindow.h"
 
 #include <QAction>
+#include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>
 #include <QLabel>
@@ -97,8 +98,13 @@ void ViewerWindow::openFile() {
     return;
   }
 
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+
   QString error;
   std::shared_ptr<TreeModel> model = TreeReader::readFromFile(path, &error);
+  
+  QApplication::restoreOverrideCursor();
+  
   if (!model) {
     showError(error.isEmpty() ? tr("Failed to load file.") : error);
     return;
@@ -113,8 +119,13 @@ void ViewerWindow::reloadFile() {
     return;
   }
 
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+
   QString error;
   std::shared_ptr<TreeModel> model = TreeReader::readFromFile(currentPath, &error);
+  
+  QApplication::restoreOverrideCursor();
+  
   if (!model) {
     showError(error.isEmpty() ? tr("Failed to reload file.") : error);
     return;
