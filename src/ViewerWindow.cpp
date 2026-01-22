@@ -53,14 +53,6 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   colorMappingCombo->setToolTip(tr("Color mapping scheme"));
   toolBar->addWidget(colorMappingCombo);
 
-  toolBar->addSeparator();
-
-  // Recompute layout action
-  QAction *recomputeAction = new QAction(style()->standardIcon(QStyle::SP_BrowserReload), tr("Recompute"), this);
-  recomputeAction->setShortcut(Qt::Key_F5);
-  recomputeAction->setToolTip(tr("Recompute layout"));
-  toolBar->addAction(recomputeAction);
-
   // Menus
   auto *fileMenu = menuBar()->addMenu(tr("&File"));
   fileMenu->addAction(openAction);
@@ -69,9 +61,6 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   QAction *quitAction = fileMenu->addAction(tr("&Quit"));
   quitAction->setShortcut(QKeySequence::Quit);
 
-  auto *viewMenu = menuBar()->addMenu(tr("&View"));
-  viewMenu->addAction(recomputeAction);
-
   auto *helpMenu = menuBar()->addMenu(tr("&Help"));
   QAction *aboutAction = helpMenu->addAction(tr("&About"));
 
@@ -79,7 +68,6 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   connect(openAction, &QAction::triggered, this, &ViewerWindow::openFile);
   connect(reloadAction, &QAction::triggered, this, &ViewerWindow::reloadFile);
   connect(quitAction, &QAction::triggered, this, &ViewerWindow::close);
-  connect(recomputeAction, &QAction::triggered, this, &ViewerWindow::recomputeLayout);
   connect(aboutAction, &QAction::triggered, this, &ViewerWindow::showAbout);
   connect(canvas, &CanvasWidget::selectedNodeChanged, this, &ViewerWindow::updateSelection);
   connect(colorMappingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
@@ -132,16 +120,6 @@ void ViewerWindow::reloadFile() {
   }
 
   setModel(model, currentPath);
-}
-
-void ViewerWindow::recomputeLayout() {
-  if (!currentModel || !currentModel->root()) {
-    return;
-  }
-
-  QRectF bounds(0, 0, canvas->width(), canvas->height());
-  TreeLayout::layout(currentModel->root(), bounds);
-  canvas->update();
 }
 
 void ViewerWindow::showAbout() {

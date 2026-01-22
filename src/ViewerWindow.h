@@ -18,7 +18,6 @@ public:
 private slots:
   void openFile();
   void reloadFile();
-  void recomputeLayout();
   void showAbout();
   void updateSelection(TreeNode *node);
   void changeColorMapping(int index);
