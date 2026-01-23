@@ -42,6 +42,7 @@ private:
   
   void drawNode(QImage &image, TreeNode *node, int depth);
   void drawSelection(QPainter &painter, TreeNode *node);
+  void drawHoveredAncestors(QPainter &painter, TreeNode *node);
   TreeNode *findNode(TreeNode *node, const QPointF &pos);
   void updateTooltip(const QPointF &rawPos);
   void showContextMenu(const QPoint &globalPos, TreeNode *node);

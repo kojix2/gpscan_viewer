@@ -119,6 +119,11 @@ void CanvasWidget::paintEvent(QPaintEvent *event) {
 
   painter.drawImage(0, 0, image);
 
+  // Highlight hovered ancestors (excluding root)
+  if (hoveredNode) {
+    drawHoveredAncestors(painter, hoveredNode);
+  }
+
   // Highlight selected node
   if (selectedNode) {
     drawSelection(painter, selectedNode);
@@ -192,8 +197,12 @@ void CanvasWidget::updateTooltip(const QPointF &rawPos) {
     QString sizeText = Utils::formatSize(node->size);
     QString tip = QString("%1\n%2").arg(fullPath, sizeText);
     QToolTip::showText(mapToGlobal(rawPos.toPoint()), tip, this);
+    update();
   } else if (!node) {
-    hoveredNode = nullptr;
+    if (hoveredNode) {
+      hoveredNode = nullptr;
+      update();
+    }
     QToolTip::hideText();
   }
 }
@@ -322,6 +331,30 @@ void CanvasWidget::drawSelection(QPainter &painter, TreeNode *node) {
   QRectF rect = node->rect;
   rect.moveTop(height() - rect.y() - rect.height());
   painter.drawRect(rect.adjusted(1, 1, -1, -1));
+}
+
+void CanvasWidget::drawHoveredAncestors(QPainter &painter, TreeNode *node) {
+  if (!node || !model || !model->root()) {
+    return;
+  }
+
+  QPen pen(QWidget::palette().color(QPalette::Highlight), 1);
+  pen.setCosmetic(true);
+  painter.setPen(pen);
+  painter.setBrush(Qt::NoBrush);
+
+  TreeNode *cur = node;
+  while (cur) {
+    if (cur == model->root()) {
+      break;
+    }
+
+    QRectF rect = cur->rect;
+    rect.moveTop(height() - rect.y() - rect.height());
+    painter.drawRect(rect.adjusted(1, 1, -1, -1));
+
+    cur = cur->parent;
+  }
 }
 
 QColor CanvasWidget::colorForNode(const TreeNode *node, int depth) const {
