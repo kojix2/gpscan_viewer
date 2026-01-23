@@ -74,7 +74,7 @@ std::array<QRgb, kGradientSteps> buildGradientColors(const QColor &base, double 
 
 CanvasWidget::CanvasWidget(QWidget *parent) : QWidget(parent) {
   setMouseTracking(true);
-  currentPaletteName = QStringLiteral("CoffeeBeans");
+  currentPaletteName = palettes::defaultPaletteName();
   palette = palettes::paletteForName(currentPaletteName);
 }
 

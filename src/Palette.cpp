@@ -3,7 +3,13 @@
 #include <algorithm>
 
 namespace palettes {
+
 namespace {
+
+constexpr int kRainbowColorCount = 12;
+
+const QString kCoffeeBeans = QStringLiteral("CoffeeBeans");
+const QString kRainbow = QStringLiteral("Rainbow");
 
 QVector<QColor> coffeeBeansPalette() {
   return {
@@ -35,27 +41,31 @@ QVector<QColor> rainbowPalette(int count) {
 QString canonicalNameOrDefault(const QString &name) {
   const QString trimmed = name.trimmed();
   if (trimmed.isEmpty()) {
-    return QStringLiteral("CoffeeBeans");
+    return kCoffeeBeans;
   }
 
-  if (trimmed.compare(QStringLiteral("CoffeeBeans"), Qt::CaseInsensitive) == 0) {
-    return QStringLiteral("CoffeeBeans");
+  if (trimmed.compare(kCoffeeBeans, Qt::CaseInsensitive) == 0) {
+    return kCoffeeBeans;
   }
-  if (trimmed.compare(QStringLiteral("Rainbow"), Qt::CaseInsensitive) == 0) {
-    return QStringLiteral("Rainbow");
+  if (trimmed.compare(kRainbow, Qt::CaseInsensitive) == 0) {
+    return kRainbow;
   }
 
-  return QStringLiteral("CoffeeBeans");
+  return kCoffeeBeans;
+}
+
+QString defaultPaletteName() {
+  return kCoffeeBeans;
 }
 
 QStringList builtInPaletteNames() {
-  return {QStringLiteral("CoffeeBeans"), QStringLiteral("Rainbow")};
+  return {kCoffeeBeans, kRainbow};
 }
 
 QVector<QColor> paletteForName(const QString &name) {
   const QString key = canonicalNameOrDefault(name);
-  if (key == QStringLiteral("Rainbow")) {
-    return rainbowPalette(12);
+  if (key == kRainbow) {
+    return rainbowPalette(kRainbowColorCount);
   }
   return coffeeBeansPalette();
 }

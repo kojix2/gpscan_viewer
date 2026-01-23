@@ -70,7 +70,7 @@ ViewerWindow::ViewerWindow(QWidget *parent)
 
   auto *settings = new QSettings("GrandPerspective", "gpscan_viewer", this);
   const QString initialPalette = palettes::canonicalNameOrDefault(
-      settings->value("paletteName", "CoffeeBeans").toString());
+      settings->value("paletteName", palettes::defaultPaletteName()).toString());
 
   for (const QString &name : palettes::builtInPaletteNames()) {
     QAction *action = paletteMenu->addAction(name);
