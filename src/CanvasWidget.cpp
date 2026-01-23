@@ -351,7 +351,7 @@ void CanvasWidget::drawHoveredAncestors(QPainter &painter, TreeNode *node) {
 
     QRectF rect = cur->rect;
     rect.moveTop(height() - rect.y() - rect.height());
-    painter.drawRect(rect.adjusted(1, 1, -1, -1));
+    painter.drawRect(rect.adjusted(0.5, 0.5, -0.5, -0.5));
 
     cur = cur->parent;
   }
