@@ -1,3 +1,5 @@
+# GPScan Viewer
+
 Dependencies (Linux)
 
 Ubuntu / Debian
@@ -54,3 +56,20 @@ Update metadata in [CMakeLists.txt](CMakeLists.txt):
 
 - `CPACK_PACKAGE_CONTACT`
 - `CPACK_DEBIAN_PACKAGE_MAINTAINER`
+
+License
+
+This project is released under the GNU General Public License.
+See [COPYING.txt](COPYING.txt).
+
+Acknowledgements
+
+This is an independent, unofficial derivative work of GrandPerspective (macOS) by Erwin Bonsma.
+It is not affiliated with or endorsed by Erwin Bonsma or the GrandPerspective project.
+
+Copyright (C) 2005-2025, Erwin Bonsma.
+
+This project was developed primarily with the assistance of AI tools.
+
+GrandPerspective is distributed under the GNU General Public License (GPL), and this project is
+distributed under GPL-2.0-or-later accordingly.

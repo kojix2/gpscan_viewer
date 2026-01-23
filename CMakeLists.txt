@@ -43,6 +43,10 @@ install(FILES resources/gpscan_viewer.svg
   DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
 )
 
+install(FILES COPYING.txt README.md
+  DESTINATION ${CMAKE_INSTALL_DOCDIR}
+)
+
 add_executable(gpscan_viewer_tests
   tests/TestMain.cpp
   src/TreeLayout.cpp
@@ -60,12 +64,23 @@ set(CPACK_PACKAGE_NAME "gpscan_viewer")
 set(CPACK_PACKAGE_VENDOR "gpscan_viewer")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
 set(CPACK_PACKAGE_CONTACT "maintainer@example.com")
-set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Viewer for GrandPerspective scan files")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING.txt")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Viewer for GrandPerspective-compatible scan XML files")
 set(CPACK_PACKAGING_INSTALL_PREFIX "/usr")
 set(CPACK_GENERATOR "DEB;RPM")
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER "maintainer@example.com")
+set(CPACK_DEBIAN_PACKAGE_RELEASE "1")
+
+# CPack may not have access to dpkg on non-Debian systems.
+# Provide a reasonable default architecture mapping.
+set(_DEB_ARCH "${CMAKE_SYSTEM_PROCESSOR}")
+if(_DEB_ARCH STREQUAL "x86_64")
+  set(_DEB_ARCH "amd64")
+elseif(_DEB_ARCH STREQUAL "aarch64")
+  set(_DEB_ARCH "arm64")
+endif()
+set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${_DEB_ARCH}")
 set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
-set(CPACK_RPM_PACKAGE_LICENSE "Unknown")
+set(CPACK_RPM_PACKAGE_LICENSE "GPL-2.0-or-later")
 set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
 include(CPack)
