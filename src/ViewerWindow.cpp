@@ -1,6 +1,7 @@
 #include "ViewerWindow.h"
 
 #include <QAction>
+#include <QActionGroup>
 #include <QApplication>
 #include <QComboBox>
 #include <QFileDialog>
@@ -8,10 +9,12 @@
 #include <QMenu>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QSettings>
 #include <QStatusBar>
 #include <QToolBar>
 
 #include "CanvasWidget.h"
+#include "Palette.h"
 #include "TreeLayout.h"
 #include "TreeReader.h"
 #include "Utils.h"
@@ -61,6 +64,31 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   QAction *quitAction = fileMenu->addAction(tr("&Quit"));
   quitAction->setShortcut(QKeySequence::Quit);
 
+  auto *paletteMenu = menuBar()->addMenu(tr("&Palette"));
+  auto *paletteGroup = new QActionGroup(this);
+  paletteGroup->setExclusive(true);
+
+  auto *settings = new QSettings("GrandPerspective", "gpscan_viewer", this);
+  const QString initialPalette = palettes::canonicalNameOrDefault(
+      settings->value("paletteName", "CoffeeBeans").toString());
+
+  for (const QString &name : palettes::builtInPaletteNames()) {
+    QAction *action = paletteMenu->addAction(name);
+    action->setCheckable(true);
+    action->setActionGroup(paletteGroup);
+    action->setData(name);
+
+    connect(action, &QAction::triggered, this, [this, action, settings]() {
+      const QString chosen = palettes::canonicalNameOrDefault(action->data().toString());
+      canvas->setPaletteName(chosen);
+      settings->setValue("paletteName", canvas->paletteName());
+    });
+
+    if (name == initialPalette) {
+      action->setChecked(true);
+    }
+  }
+
   auto *helpMenu = menuBar()->addMenu(tr("&Help"));
   QAction *aboutAction = helpMenu->addAction(tr("&About"));
 
@@ -72,6 +100,8 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   connect(canvas, &CanvasWidget::selectedNodeChanged, this, &ViewerWindow::updateSelection);
   connect(colorMappingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &ViewerWindow::changeColorMapping);
+
+  canvas->setPaletteName(initialPalette);
 
   statusBar()->showMessage(tr("Ready"));
 }

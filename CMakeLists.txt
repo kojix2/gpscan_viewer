@@ -19,6 +19,7 @@ add_executable(gpscan_viewer
   src/main.cpp
   src/ViewerWindow.cpp
   src/CanvasWidget.cpp
+  src/Palette.cpp
   src/TreeModel.cpp
   src/TreeReader.cpp
   src/TreeLayout.cpp

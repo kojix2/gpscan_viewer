@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <memory>
 
+#include <QString>
+
 #include "TreeModel.h"
 
 class CanvasWidget : public QWidget {
@@ -22,6 +24,9 @@ public:
 
   void setModel(std::shared_ptr<TreeModel> model);
   void setColorMappingMode(ColorMappingMode mode);
+
+  void setPaletteName(const QString &name);
+  QString paletteName() const;
 
 signals:
   void selectedNodeChanged(TreeNode *node);
@@ -52,5 +57,6 @@ private:
   TreeNode *selectedNode = nullptr;
   TreeNode *hoveredNode = nullptr;
   QVector<QColor> palette;
+  QString currentPaletteName;
   ColorMappingMode colorMappingMode = ColorMappingMode::Extension;
 };

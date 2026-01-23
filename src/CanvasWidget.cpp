@@ -19,6 +19,8 @@
 #include "TreeLayout.h"
 #include "Utils.h"
 
+#include "Palette.h"
+
 namespace {
 
 constexpr int kGradientSteps = 256;
@@ -68,24 +70,32 @@ std::array<QRgb, kGradientSteps> buildGradientColors(const QColor &base, double 
   return colors;
 }
 
-QVector<QColor> defaultPalette() {
-  // Original GrandPerspective default palette: CoffeeBeans
-  return {
-      QColor(0x66, 0x66, 0x00), // 666600
-      QColor(0x99, 0x33, 0x00), // 993300
-      QColor(0xCC, 0x66, 0x66), // CC6666
-      QColor(0xCC, 0x66, 0x33), // CC6633
-      QColor(0xFF, 0xCC, 0x66), // FFCC66
-      QColor(0xCC, 0x99, 0x33), // CC9933
-      QColor(0xCC, 0x33, 0x33)  // CC3333
-  };
-}
-
 } // namespace
 
 CanvasWidget::CanvasWidget(QWidget *parent) : QWidget(parent) {
   setMouseTracking(true);
-  palette = defaultPalette();
+  currentPaletteName = QStringLiteral("CoffeeBeans");
+  palette = palettes::paletteForName(currentPaletteName);
+}
+
+void CanvasWidget::setPaletteName(const QString &name) {
+  const QString effective = palettes::canonicalNameOrDefault(name);
+  if (currentPaletteName == effective) {
+    return;
+  }
+
+  QVector<QColor> next = palettes::paletteForName(effective);
+  if (next.isEmpty()) {
+    return;
+  }
+
+  currentPaletteName = effective;
+  palette = std::move(next);
+  update();
+}
+
+QString CanvasWidget::paletteName() const {
+  return currentPaletteName;
 }
 
 void CanvasWidget::setColorMappingMode(ColorMappingMode mode) {
