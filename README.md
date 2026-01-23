@@ -1,40 +1,53 @@
 # GPScan Viewer
 
-Dependencies (Linux)
+- Unofficial Qt viewer for [GrandPerspective](https://grandperspectiv.sourceforge.net/) compatible scan XML files
+- Works with XML produced by [gpscan](https://github.com/kojix2/gpscan)
+- License: GPL (see [COPYING.txt](COPYING.txt))
 
-Ubuntu / Debian
+## Dependencies
+
+### Ubuntu / Debian
 
 ```bash
 sudo apt update
 sudo apt install -y cmake g++ qt6-base-dev zlib1g-dev
 ```
 
-Fedora
+### Fedora
 
 ```bash
 sudo dnf install -y cmake gcc-c++ qt6-qtbase-devel zlib-devel
 ```
 
-openSUSE
+### openSUSE
 
 ```bash
 sudo zypper install -y cmake gcc-c++ qt6-base-devel zlib-devel
 ```
 
-Build
+### macOS
+
+First, get [GrandPerspective](https://grandperspectiv.sourceforge.net/). That's enough.
+If you're still curious about this viewer, install build dependencies via Homebrew:
+
+```bash
+brew install cmake qt@6 zlib
+```
+
+## Build
 
 ```bash
 cmake -S . -B build
 cmake --build build
 ```
 
-Run
+## Run
 
 ```bash
 ./build/gpscan_viewer
 ```
 
-Test
+## Test
 
 ```bash
 cmake -S . -B build
@@ -42,7 +55,7 @@ cmake --build build
 ctest --test-dir build
 ```
 
-Package (DEB/RPM)
+## Package (DEB/RPM)
 
 ```bash
 cmake -S . -B build
@@ -50,19 +63,19 @@ cmake --build build
 cpack --config build/CPackConfig.cmake
 ```
 
-Packages are created under build (e.g., build/*.deb, build/*.rpm).
+Packages are created under `build/` (e.g., `build/*.deb`, `build/*.rpm`).
 
 Update metadata in [CMakeLists.txt](CMakeLists.txt):
 
 - `CPACK_PACKAGE_CONTACT`
 - `CPACK_DEBIAN_PACKAGE_MAINTAINER`
 
-License
+## License
 
 This project is released under the GNU General Public License.
 See [COPYING.txt](COPYING.txt).
 
-Acknowledgements
+## Acknowledgements
 
 This is an independent, unofficial derivative work of GrandPerspective (macOS) by Erwin Bonsma.
 It is not affiliated with or endorsed by Erwin Bonsma or the GrandPerspective project.
