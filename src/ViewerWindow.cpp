@@ -157,9 +157,63 @@ void ViewerWindow::reloadFile() {
 }
 
 void ViewerWindow::showAbout() {
-  QMessageBox::about(this,
-                     tr("About gpscan_viewer"),
-                     tr("Minimal viewer for GrandPerspective scan data (XML/gpscan)."));
+  QMessageBox box(this);
+  box.setWindowTitle(tr("About gpscan_viewer"));
+  const QString version = QCoreApplication::applicationVersion().isEmpty()
+                              ? tr("(unknown)")
+                              : QCoreApplication::applicationVersion();
+#ifdef GPSCAN_VIEWER_REPO_URL
+  const QString repoUrl = QStringLiteral(GPSCAN_VIEWER_REPO_URL);
+#else
+  const QString repoUrl =
+      QStringLiteral("https://github.com/kojix2/gpscan_viewer");
+#endif
+
+  const QString grandPerspectiveUrl =
+      QStringLiteral("https://grandperspectiv.sourceforge.net/");
+  const QString qtUrl = QStringLiteral("https://www.qt.io/");
+  const QString aboutText =
+      tr("Qt-based minimal viewer for GrandPerspective scan data "
+         "(XML/gpscan).") +
+      QStringLiteral("<br><br>") + tr("Version: %1").arg(version) +
+      QStringLiteral("<br>") +
+      tr("Repository: <a href=\"%1\">%1</a>").arg(repoUrl) +
+      QStringLiteral("<br><br>") +
+      tr("Acknowledgements: Based on the macOS app GrandPerspective by Erwin "
+         "Bonsma.") +
+      QStringLiteral("<br>") +
+      tr("GrandPerspective: <a href=\"%1\">%1</a>").arg(grandPerspectiveUrl) +
+      QStringLiteral("<br>") + tr("License: GPL-2.0-or-later");
+  box.setTextFormat(Qt::RichText);
+  box.setText(aboutText);
+  box.setTextInteractionFlags(Qt::TextBrowserInteraction);
+  if (auto *label =
+          box.findChild<QLabel *>(QStringLiteral("qt_msgbox_label"))) {
+    label->setOpenExternalLinks(true);
+  }
+
+  QIcon appIcon = QIcon::fromTheme(QStringLiteral("gpscan_viewer"));
+  if (appIcon.isNull()) {
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QStringList iconCandidates = {
+        appDir + QStringLiteral("/../resources/gpscan_viewer.svg"),
+        appDir + QStringLiteral(
+                     "/../share/icons/hicolor/scalable/apps/gpscan_viewer.svg"),
+        QStringLiteral(
+            "/usr/share/icons/hicolor/scalable/apps/gpscan_viewer.svg")};
+    for (const QString &path : iconCandidates) {
+      if (QFileInfo::exists(path)) {
+        appIcon = QIcon(path);
+        break;
+      }
+    }
+  }
+
+  if (!appIcon.isNull()) {
+    box.setIconPixmap(appIcon.pixmap(128, 128));
+  }
+
+  box.exec();
 }
 
 void ViewerWindow::changeColorMapping(int index) {
