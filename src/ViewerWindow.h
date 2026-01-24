@@ -14,6 +14,7 @@ class ViewerWindow : public QMainWindow {
 
 public:
   explicit ViewerWindow(QWidget *parent = nullptr);
+  bool openFilePath(const QString &path);
 
 private slots:
   void openFile();
@@ -26,6 +27,7 @@ private slots:
 private:
   void setModel(std::shared_ptr<TreeModel> model, const QString &sourcePath);
   void showError(const QString &message);
+  bool loadModelFromPath(const QString &path, const QString &failMessage);
 
   CanvasWidget *canvas = nullptr;
   QToolBar *toolBar = nullptr;

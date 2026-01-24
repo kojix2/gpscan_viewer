@@ -126,20 +126,14 @@ void ViewerWindow::openFile() {
   if (path.isEmpty()) {
     return;
   }
+  openFilePath(path);
+}
 
-  QApplication::setOverrideCursor(Qt::WaitCursor);
-
-  QString error;
-  std::shared_ptr<TreeModel> model = TreeReader::readFromFile(path, &error);
-
-  QApplication::restoreOverrideCursor();
-
-  if (!model) {
-    showError(error.isEmpty() ? tr("Failed to load file.") : error);
-    return;
+bool ViewerWindow::openFilePath(const QString &path) {
+  if (path.isEmpty()) {
+    return false;
   }
-
-  setModel(model, path);
+  return loadModelFromPath(path, tr("Failed to load file."));
 }
 
 void ViewerWindow::reloadFile() {
@@ -147,21 +141,7 @@ void ViewerWindow::reloadFile() {
     statusBar()->showMessage(tr("No file to reload"));
     return;
   }
-
-  QApplication::setOverrideCursor(Qt::WaitCursor);
-
-  QString error;
-  std::shared_ptr<TreeModel> model =
-      TreeReader::readFromFile(currentPath, &error);
-
-  QApplication::restoreOverrideCursor();
-
-  if (!model) {
-    showError(error.isEmpty() ? tr("Failed to reload file.") : error);
-    return;
-  }
-
-  setModel(model, currentPath);
+  loadModelFromPath(currentPath, tr("Failed to reload file."));
 }
 
 void ViewerWindow::showAbout() {
@@ -256,6 +236,24 @@ void ViewerWindow::updateSelection(TreeNode *node) {
 
 void ViewerWindow::showError(const QString &message) {
   QMessageBox::critical(this, tr("Error"), message);
+}
+
+bool ViewerWindow::loadModelFromPath(const QString &path,
+                                     const QString &failMessage) {
+  QApplication::setOverrideCursor(Qt::WaitCursor);
+
+  QString error;
+  std::shared_ptr<TreeModel> model = TreeReader::readFromFile(path, &error);
+
+  QApplication::restoreOverrideCursor();
+
+  if (!model) {
+    showError(error.isEmpty() ? failMessage : error);
+    return false;
+  }
+
+  setModel(model, path);
+  return true;
 }
 
 void ViewerWindow::deletePath(const QString &path) {
