@@ -12,9 +12,10 @@ void mirrorRects(TreeNode *node, const QRectF &rootBounds) {
   }
 
   const QRectF r = node->rect;
-  const double newX = rootBounds.x() + rootBounds.width() - (r.x() - rootBounds.x()) - r.width();
-  const double newY =
-      rootBounds.y() + rootBounds.height() - (r.y() - rootBounds.y()) - r.height();
+  const double newX = rootBounds.x() + rootBounds.width() -
+                      (r.x() - rootBounds.x()) - r.width();
+  const double newY = rootBounds.y() + rootBounds.height() -
+                      (r.y() - rootBounds.y()) - r.height();
   node->rect = QRectF(newX, newY, r.width(), r.height());
 
   for (TreeNode *child : node->children) {
@@ -29,9 +30,11 @@ struct LayoutNode {
   double size = 0.0;
 };
 
-LayoutNode *buildBalancedTree(const QVector<TreeNode *> &items,
-                              std::vector<std::unique_ptr<LayoutNode>> &storage) {
-  auto makeNode = [&](TreeNode *leaf, LayoutNode *left, LayoutNode *right, double size) {
+LayoutNode *
+buildBalancedTree(const QVector<TreeNode *> &items,
+                  std::vector<std::unique_ptr<LayoutNode>> &storage) {
+  auto makeNode = [&](TreeNode *leaf, LayoutNode *left, LayoutNode *right,
+                      double size) {
     storage.emplace_back(std::make_unique<LayoutNode>());
     LayoutNode *node = storage.back().get();
     node->leaf = leaf;
@@ -47,7 +50,9 @@ LayoutNode *buildBalancedTree(const QVector<TreeNode *> &items,
   };
 
   struct Compare {
-    bool operator()(const NodeRef &a, const NodeRef &b) const { return a.size > b.size; }
+    bool operator()(const NodeRef &a, const NodeRef &b) const {
+      return a.size > b.size;
+    }
   };
 
   std::priority_queue<NodeRef, std::vector<NodeRef>, Compare> queue;
@@ -56,7 +61,8 @@ LayoutNode *buildBalancedTree(const QVector<TreeNode *> &items,
     if (!item || item->size == 0) {
       continue;
     }
-    LayoutNode *leaf = makeNode(item, nullptr, nullptr, static_cast<double>(item->size));
+    LayoutNode *leaf =
+        makeNode(item, nullptr, nullptr, static_cast<double>(item->size));
     queue.push({leaf, leaf->size});
   }
 
@@ -77,7 +83,8 @@ LayoutNode *buildBalancedTree(const QVector<TreeNode *> &items,
   return queue.top().node;
 }
 
-void layoutBinary(LayoutNode *node, const QRectF &rect, QVector<TreeNode *> &leaves) {
+void layoutBinary(LayoutNode *node, const QRectF &rect,
+                  QVector<TreeNode *> &leaves) {
   if (!node) {
     return;
   }
@@ -158,13 +165,15 @@ void layoutNode(TreeNode *node, const QRectF &bounds,
     if (bounds.width() >= bounds.height()) {
       double w = bounds.width() * ratio;
       QRectF fileRect(bounds.x(), bounds.y(), w, bounds.height());
-      QRectF dirRect(bounds.x() + w, bounds.y(), bounds.width() - w, bounds.height());
+      QRectF dirRect(bounds.x() + w, bounds.y(), bounds.width() - w,
+                     bounds.height());
       layoutGroup(files, fileRect, storage);
       layoutGroup(dirs, dirRect, storage);
     } else {
       double h = bounds.height() * ratio;
       QRectF fileRect(bounds.x(), bounds.y(), bounds.width(), h);
-      QRectF dirRect(bounds.x(), bounds.y() + h, bounds.width(), bounds.height() - h);
+      QRectF dirRect(bounds.x(), bounds.y() + h, bounds.width(),
+                     bounds.height() - h);
       layoutGroup(files, fileRect, storage);
       layoutGroup(dirs, dirRect, storage);
     }
@@ -201,6 +210,7 @@ void TreeLayout::layout(TreeNode *root, const QRectF &bounds) {
   std::vector<std::unique_ptr<LayoutNode>> storage;
   layoutNode(root, bounds, storage);
 
-  // GrandPerspective-compatible orientation: mirror both X and Y within the root bounds.
+  // GrandPerspective-compatible orientation: mirror both X and Y within the
+  // root bounds.
   mirrorRects(root, bounds);
 }

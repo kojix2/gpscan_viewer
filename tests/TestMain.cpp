@@ -36,7 +36,8 @@ QByteArray sampleXml() {
       "</GrandPerspectiveScanDump>\n");
 }
 
-QString writeTempFile(const QTemporaryDir &dir, const QString &name, const QByteArray &data) {
+QString writeTempFile(const QTemporaryDir &dir, const QString &name,
+                      const QByteArray &data) {
   QString path = dir.path() + "/" + name;
   QFile file(path);
   if (!file.open(QIODevice::WriteOnly)) {
@@ -107,17 +108,20 @@ bool testTreeLayout() {
   ok &= expectTrue(childA->rect.height() > 0.0, "childA height > 0");
   ok &= expectTrue(childB->rect.width() > 0.0, "childB width > 0");
   ok &= expectTrue(childB->rect.height() > 0.0, "childB height > 0");
-  ok &= expectTrue(!childA->rect.intersects(childB->rect), "children do not overlap");
+  ok &= expectTrue(!childA->rect.intersects(childB->rect),
+                   "children do not overlap");
   ok &= expectTrue(root->rect.contains(childA->rect), "root contains childA");
   ok &= expectTrue(root->rect.contains(childB->rect), "root contains childB");
 
-  // Orientation check (GrandPerspective-compatible): larger item should be placed
-  // towards the top-left compared to smaller items.
-  ok &= expectTrue(childA->rect.center().x() < childB->rect.center().x(), "A is left of B");
+  // Orientation check (GrandPerspective-compatible): larger item should be
+  // placed towards the top-left compared to smaller items.
+  ok &= expectTrue(childA->rect.center().x() < childB->rect.center().x(),
+                   "A is left of B");
 
   // Vertical split case: larger item should be above smaller item.
   TreeLayout::layout(root, QRectF(0, 0, 50, 100));
-  ok &= expectTrue(childA->rect.center().y() < childB->rect.center().y(), "A is above B");
+  ok &= expectTrue(childA->rect.center().y() < childB->rect.center().y(),
+                   "A is above B");
 
   TreeModel::deleteSubtree(root);
   return ok;
@@ -173,7 +177,8 @@ bool testFormatSize() {
   ok &= expectTrue(Utils::formatSize(1024) == "1.00 KB", "formatSize(1024)");
   ok &= expectTrue(Utils::formatSize(1536) == "1.50 KB", "formatSize(1536)");
   ok &= expectTrue(Utils::formatSize(1048576) == "1.00 MB", "formatSize(1MB)");
-  ok &= expectTrue(Utils::formatSize(1073741824) == "1.00 GB", "formatSize(1GB)");
+  ok &=
+      expectTrue(Utils::formatSize(1073741824) == "1.00 GB", "formatSize(1GB)");
   return ok;
 }
 
@@ -196,8 +201,10 @@ bool testBuildFullPath() {
 
   bool ok = true;
   ok &= expectTrue(Utils::buildFullPath(root) == "/", "buildFullPath(root)");
-  ok &= expectTrue(Utils::buildFullPath(home) == "/home", "buildFullPath(home)");
-  ok &= expectTrue(Utils::buildFullPath(file) == "/home/test.txt", "buildFullPath(file)");
+  ok &=
+      expectTrue(Utils::buildFullPath(home) == "/home", "buildFullPath(home)");
+  ok &= expectTrue(Utils::buildFullPath(file) == "/home/test.txt",
+                   "buildFullPath(file)");
 
   TreeModel::deleteSubtree(root);
   return ok;

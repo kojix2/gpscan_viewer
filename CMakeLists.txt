@@ -26,6 +26,11 @@ add_executable(gpscan_viewer
   src/Utils.cpp
 )
 
+target_compile_definitions(gpscan_viewer PRIVATE
+  GPSCAN_VIEWER_VERSION="${PROJECT_VERSION}"
+  GPSCAN_VIEWER_REPO_URL="https://github.com/kojix2/gpscan_viewer"
+)
+
 target_link_libraries(gpscan_viewer PRIVATE Qt6::Widgets ZLIB::ZLIB)
 
 install(TARGETS gpscan_viewer

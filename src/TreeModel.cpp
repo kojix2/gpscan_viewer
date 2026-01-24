@@ -37,6 +37,4 @@ quint64 TreeModel::computeSize(TreeNode *node) {
   return node->size;
 }
 
-void TreeModel::computeDerivedSizes() {
-  computeSize(rootNode);
-}
+void TreeModel::computeDerivedSizes() { computeSize(rootNode); }

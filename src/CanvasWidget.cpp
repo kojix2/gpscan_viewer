@@ -7,8 +7,8 @@
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
-#include <QMouseEvent>
 #include <QMenu>
+#include <QMouseEvent>
 #include <QPainter>
 #include <QToolTip>
 #include <QUrl>
@@ -26,7 +26,8 @@ namespace {
 
 constexpr int kGradientSteps = 256;
 
-std::array<QRgb, kGradientSteps> buildGradientColors(const QColor &base, double colorGradient) {
+std::array<QRgb, kGradientSteps> buildGradientColors(const QColor &base,
+                                                     double colorGradient) {
   std::array<QRgb, kGradientSteps> colors{};
 
   float hue = 0.0f;
@@ -95,9 +96,7 @@ void CanvasWidget::setPaletteName(const QString &name) {
   update();
 }
 
-QString CanvasWidget::paletteName() const {
-  return currentPaletteName;
-}
+QString CanvasWidget::paletteName() const { return currentPaletteName; }
 
 void CanvasWidget::setColorMappingMode(ColorMappingMode mode) {
   if (colorMappingMode != mode) {
@@ -229,7 +228,8 @@ void CanvasWidget::showContextMenu(const QPoint &globalPos, TreeNode *node) {
   }
 
   QFileInfo info(fullPath);
-  const QString revealPath = info.isDir() ? info.absoluteFilePath() : info.absolutePath();
+  const QString revealPath =
+      info.isDir() ? info.absoluteFilePath() : info.absolutePath();
 
   QMenu menu(this);
 
@@ -242,7 +242,8 @@ void CanvasWidget::showContextMenu(const QPoint &globalPos, TreeNode *node) {
   revealAction->setEnabled(!revealPath.isEmpty());
   copyPathAction->setEnabled(!fullPath.isEmpty());
   const QString cleanedPath = QDir::cleanPath(fullPath);
-  bool deleteEnabled = !cleanedPath.isEmpty() && QDir::isAbsolutePath(cleanedPath) &&
+  bool deleteEnabled = !cleanedPath.isEmpty() &&
+                       QDir::isAbsolutePath(cleanedPath) &&
                        cleanedPath != QDir::rootPath();
   if (deleteEnabled) {
     QFileInfo deleteInfo(cleanedPath);
@@ -274,7 +275,8 @@ QPointF CanvasWidget::mapToLayout(const QPointF &pos) const {
   return QPointF(pos.x(), height() - pos.y());
 }
 
-void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor &base) {
+void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect,
+                                 const QColor &base) {
   int x0 = static_cast<int>(rect.x() + 0.5);
   int y0 = static_cast<int>(rect.y() + 0.5);
   int rectWidth = static_cast<int>(rect.x() + rect.width() + 0.5) - x0;
@@ -287,8 +289,9 @@ void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor
   const int imgWidth = image.width();
   const int imgHeight = image.height();
 
-  // GrandPerspective original algorithm: two triangles filled by horizontal and vertical
-  // gradient lines, using a gradient palette derived from the base color.
+  // GrandPerspective original algorithm: two triangles filled by horizontal and
+  // vertical gradient lines, using a gradient palette derived from the base
+  // color.
   constexpr double kDefaultColorGradient = 0.5;
   const auto gradientColors = buildGradientColors(base, kDefaultColorGradient);
 
@@ -305,11 +308,13 @@ void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor
   // Horizontal lines: upper-left triangle
   for (int y = 0; y < rectHeight; ++y) {
     double gradient = 256.0 * (y0 + y + 0.5 - rect.y()) / rect.height();
-    int gradientIndex = std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
+    int gradientIndex =
+        std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
     QRgb color = gradientColors[gradientIndex];
 
     int maxX = (rectHeight - y - 1) * rectWidth / rectHeight;
-    int yWrite = imgHeight - y0 - y - 1; // Match original bitmap's flipped Y-axis
+    int yWrite =
+        imgHeight - y0 - y - 1; // Match original bitmap's flipped Y-axis
     for (int x = 0; x < maxX; ++x) {
       setPixel(x0 + x, yWrite, color);
     }
@@ -318,7 +323,8 @@ void CanvasWidget::drawBevelRect(QImage &image, const QRectF &rect, const QColor
   // Vertical lines: lower-right triangle
   for (int x = 0; x < rectWidth; ++x) {
     double gradient = 256.0 * (1.0 - (x0 + x + 0.5 - rect.x()) / rect.width());
-    int gradientIndex = std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
+    int gradientIndex =
+        std::clamp(static_cast<int>(std::lround(gradient)), 0, 255);
     QRgb color = gradientColors[gradientIndex];
 
     int minY = (rectWidth - x - 1) * rectHeight / rectWidth;
@@ -349,7 +355,8 @@ void CanvasWidget::drawNode(QImage &image, TreeNode *node, int depth) {
 }
 
 void CanvasWidget::drawSelection(QPainter &painter, TreeNode *node) {
-  if (!node) return;
+  if (!node)
+    return;
 
   painter.setPen(QPen(Qt::yellow, 2));
   painter.setBrush(Qt::NoBrush);
@@ -418,7 +425,8 @@ QColor CanvasWidget::colorForNode(const TreeNode *node, int depth) const {
     while (cur->parent && cur->parent->parent) {
       cur = cur->parent;
     }
-    // If the root has name "/", cur might still be a file; use its parent when possible.
+    // If the root has name "/", cur might still be a file; use its parent when
+    // possible.
     if (!cur->isDir && cur->parent) {
       return cur->parent->name;
     }
@@ -437,7 +445,8 @@ QColor CanvasWidget::colorForNode(const TreeNode *node, int depth) const {
     break;
   }
   case ColorMappingMode::Name: {
-    index = static_cast<int>(qHash(node->name) % static_cast<uint>(palette.size()));
+    index =
+        static_cast<int>(qHash(node->name) % static_cast<uint>(palette.size()));
     break;
   }
   case ColorMappingMode::Folder: {

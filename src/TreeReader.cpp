@@ -31,7 +31,8 @@ static QByteArray inflateGzip(const QByteArray &compressed, QString *errorOut) {
     return QByteArray();
   }
 
-  stream.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(compressed.data()));
+  stream.next_in =
+      reinterpret_cast<Bytef *>(const_cast<char *>(compressed.data()));
   stream.avail_in = static_cast<uInt>(compressed.size());
 
   QByteArray output;
@@ -47,7 +48,8 @@ static QByteArray inflateGzip(const QByteArray &compressed, QString *errorOut) {
     inflateResult = inflate(&stream, Z_NO_FLUSH);
     if (inflateResult != Z_OK && inflateResult != Z_STREAM_END) {
       if (errorOut) {
-        *errorOut = QObject::tr("Failed to decompress gzip data (code %1).").arg(inflateResult);
+        *errorOut = QObject::tr("Failed to decompress gzip data (code %1).")
+                        .arg(inflateResult);
       }
       inflateEnd(&stream);
       return QByteArray();
@@ -61,7 +63,8 @@ static QByteArray inflateGzip(const QByteArray &compressed, QString *errorOut) {
   return output;
 }
 
-std::shared_ptr<TreeModel> TreeReader::readFromFile(const QString &path, QString *errorOut) {
+std::shared_ptr<TreeModel> TreeReader::readFromFile(const QString &path,
+                                                    QString *errorOut) {
   QFile file(path);
   if (!file.open(QIODevice::ReadOnly)) {
     if (errorOut) {
@@ -84,8 +87,9 @@ std::shared_ptr<TreeModel> TreeReader::readFromFile(const QString &path, QString
     xmlData = inflateGzip(rawData, &decompressError);
     if (xmlData.isEmpty()) {
       if (errorOut) {
-        *errorOut = decompressError.isEmpty() ? QObject::tr("Failed to decompress file.")
-                                               : decompressError;
+        *errorOut = decompressError.isEmpty()
+                        ? QObject::tr("Failed to decompress file.")
+                        : decompressError;
       }
       return nullptr;
     }

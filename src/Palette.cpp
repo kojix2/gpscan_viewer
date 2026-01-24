@@ -54,13 +54,9 @@ QString canonicalNameOrDefault(const QString &name) {
   return kCoffeeBeans;
 }
 
-QString defaultPaletteName() {
-  return kCoffeeBeans;
-}
+QString defaultPaletteName() { return kCoffeeBeans; }
 
-QStringList builtInPaletteNames() {
-  return {kCoffeeBeans, kRainbow};
-}
+QStringList builtInPaletteNames() { return {kCoffeeBeans, kRainbow}; }
 
 QVector<QColor> paletteForName(const QString &name) {
   const QString key = canonicalNameOrDefault(name);

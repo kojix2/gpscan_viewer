@@ -45,7 +45,7 @@ private:
 
   // Draw rectangle with GrandPerspective-style two-triangle gradient
   void drawBevelRect(QImage &image, const QRectF &rect, const QColor &base);
-  
+
   void drawNode(QImage &image, TreeNode *node, int depth);
   void drawSelection(QPainter &painter, TreeNode *node);
   void drawHoveredAncestors(QPainter &painter, TreeNode *node);

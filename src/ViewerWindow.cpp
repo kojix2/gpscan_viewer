@@ -4,10 +4,12 @@
 #include <QActionGroup>
 #include <QApplication>
 #include <QComboBox>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QIcon>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
@@ -33,13 +35,15 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   toolBar->setIconSize(QSize(24, 24));
 
   // Open action with icon
-  QAction *openAction = new QAction(style()->standardIcon(QStyle::SP_DialogOpenButton), tr("Open"), this);
+  QAction *openAction = new QAction(
+      style()->standardIcon(QStyle::SP_DialogOpenButton), tr("Open"), this);
   openAction->setShortcut(QKeySequence::Open);
   openAction->setToolTip(tr("Open scan data file"));
   toolBar->addAction(openAction);
 
   // Reload action with icon
-  QAction *reloadAction = new QAction(style()->standardIcon(QStyle::SP_BrowserReload), tr("Reload"), this);
+  QAction *reloadAction = new QAction(
+      style()->standardIcon(QStyle::SP_BrowserReload), tr("Reload"), this);
   reloadAction->setShortcut(QKeySequence::Refresh);
   reloadAction->setToolTip(tr("Reload current file"));
   toolBar->addAction(reloadAction);
@@ -73,7 +77,8 @@ ViewerWindow::ViewerWindow(QWidget *parent)
 
   auto *settings = new QSettings("GrandPerspective", "gpscan_viewer", this);
   const QString initialPalette = palettes::canonicalNameOrDefault(
-      settings->value("paletteName", palettes::defaultPaletteName()).toString());
+      settings->value("paletteName", palettes::defaultPaletteName())
+          .toString());
 
   for (const QString &name : palettes::builtInPaletteNames()) {
     QAction *action = paletteMenu->addAction(name);
@@ -82,7 +87,8 @@ ViewerWindow::ViewerWindow(QWidget *parent)
     action->setData(name);
 
     connect(action, &QAction::triggered, this, [this, action, settings]() {
-      const QString chosen = palettes::canonicalNameOrDefault(action->data().toString());
+      const QString chosen =
+          palettes::canonicalNameOrDefault(action->data().toString());
       canvas->setPaletteName(chosen);
       settings->setValue("paletteName", canvas->paletteName());
     });
@@ -100,10 +106,13 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   connect(reloadAction, &QAction::triggered, this, &ViewerWindow::reloadFile);
   connect(quitAction, &QAction::triggered, this, &ViewerWindow::close);
   connect(aboutAction, &QAction::triggered, this, &ViewerWindow::showAbout);
-  connect(canvas, &CanvasWidget::selectedNodeChanged, this, &ViewerWindow::updateSelection);
-  connect(canvas, &CanvasWidget::requestDeletePath, this, &ViewerWindow::deletePath);
-  connect(colorMappingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
-          this, &ViewerWindow::changeColorMapping);
+  connect(canvas, &CanvasWidget::selectedNodeChanged, this,
+          &ViewerWindow::updateSelection);
+  connect(canvas, &CanvasWidget::requestDeletePath, this,
+          &ViewerWindow::deletePath);
+  connect(colorMappingCombo,
+          QOverload<int>::of(&QComboBox::currentIndexChanged), this,
+          &ViewerWindow::changeColorMapping);
 
   canvas->setPaletteName(initialPalette);
 
@@ -112,9 +121,7 @@ ViewerWindow::ViewerWindow(QWidget *parent)
 
 void ViewerWindow::openFile() {
   QString path = QFileDialog::getOpenFileName(
-      this,
-      tr("Open Scan Data"),
-      QString(),
+      this, tr("Open Scan Data"), QString(),
       tr("GrandPerspective Scan Data (*.gpscan *.xml);;All Files (*)"));
   if (path.isEmpty()) {
     return;
@@ -124,9 +131,9 @@ void ViewerWindow::openFile() {
 
   QString error;
   std::shared_ptr<TreeModel> model = TreeReader::readFromFile(path, &error);
-  
+
   QApplication::restoreOverrideCursor();
-  
+
   if (!model) {
     showError(error.isEmpty() ? tr("Failed to load file.") : error);
     return;
@@ -144,10 +151,11 @@ void ViewerWindow::reloadFile() {
   QApplication::setOverrideCursor(Qt::WaitCursor);
 
   QString error;
-  std::shared_ptr<TreeModel> model = TreeReader::readFromFile(currentPath, &error);
-  
+  std::shared_ptr<TreeModel> model =
+      TreeReader::readFromFile(currentPath, &error);
+
   QApplication::restoreOverrideCursor();
-  
+
   if (!model) {
     showError(error.isEmpty() ? tr("Failed to reload file.") : error);
     return;
@@ -217,11 +225,13 @@ void ViewerWindow::showAbout() {
 }
 
 void ViewerWindow::changeColorMapping(int index) {
-  CanvasWidget::ColorMappingMode mode = static_cast<CanvasWidget::ColorMappingMode>(index);
+  CanvasWidget::ColorMappingMode mode =
+      static_cast<CanvasWidget::ColorMappingMode>(index);
   canvas->setColorMappingMode(mode);
 }
 
-void ViewerWindow::setModel(std::shared_ptr<TreeModel> model, const QString &sourcePath) {
+void ViewerWindow::setModel(std::shared_ptr<TreeModel> model,
+                            const QString &sourcePath) {
   currentModel = std::move(model);
   currentPath = sourcePath;
 
@@ -282,10 +292,7 @@ void ViewerWindow::deletePath(const QString &path) {
   }
 
   QMessageBox::StandardButton reply = QMessageBox::warning(
-      this,
-      tr("Delete"),
-      prompt,
-      QMessageBox::Yes | QMessageBox::Cancel,
+      this, tr("Delete"), prompt, QMessageBox::Yes | QMessageBox::Cancel,
       QMessageBox::Cancel);
 
   if (reply != QMessageBox::Yes) {
