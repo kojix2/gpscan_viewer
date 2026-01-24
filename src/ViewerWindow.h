@@ -21,6 +21,7 @@ private slots:
   void showAbout();
   void updateSelection(TreeNode *node);
   void changeColorMapping(int index);
+  void deletePath(const QString &path);
 
 private:
   void setModel(std::shared_ptr<TreeModel> model, const QString &sourcePath);

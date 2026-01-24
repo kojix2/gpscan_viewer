@@ -3,6 +3,7 @@
 #include <QClipboard>
 #include <QContextMenuEvent>
 #include <QDesktopServices>
+#include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
@@ -235,10 +236,19 @@ void CanvasWidget::showContextMenu(const QPoint &globalPos, TreeNode *node) {
   QAction *openAction = menu.addAction(tr("Open"));
   QAction *revealAction = menu.addAction(tr("Reveal"));
   QAction *copyPathAction = menu.addAction(tr("Copy Path"));
+  QAction *deleteAction = menu.addAction(tr("Delete"));
 
   openAction->setEnabled(!fullPath.isEmpty());
   revealAction->setEnabled(!revealPath.isEmpty());
   copyPathAction->setEnabled(!fullPath.isEmpty());
+  const QString cleanedPath = QDir::cleanPath(fullPath);
+  bool deleteEnabled = !cleanedPath.isEmpty() && QDir::isAbsolutePath(cleanedPath) &&
+                       cleanedPath != QDir::rootPath();
+  if (deleteEnabled) {
+    QFileInfo deleteInfo(cleanedPath);
+    deleteEnabled = deleteInfo.exists() || deleteInfo.isSymLink();
+  }
+  deleteAction->setEnabled(deleteEnabled);
 
   connect(openAction, &QAction::triggered, this, [fullPath]() {
     QDesktopServices::openUrl(QUrl::fromLocalFile(fullPath));
@@ -249,6 +259,11 @@ void CanvasWidget::showContextMenu(const QPoint &globalPos, TreeNode *node) {
   connect(copyPathAction, &QAction::triggered, this, [fullPath]() {
     if (auto *clipboard = QGuiApplication::clipboard()) {
       clipboard->setText(fullPath);
+    }
+  });
+  connect(deleteAction, &QAction::triggered, this, [this, cleanedPath]() {
+    if (!cleanedPath.isEmpty()) {
+      emit requestDeletePath(cleanedPath);
     }
   });
 

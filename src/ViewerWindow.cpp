@@ -4,7 +4,10 @@
 #include <QActionGroup>
 #include <QApplication>
 #include <QComboBox>
+#include <QDir>
+#include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QLabel>
 #include <QMenu>
 #include <QMenuBar>
@@ -98,6 +101,7 @@ ViewerWindow::ViewerWindow(QWidget *parent)
   connect(quitAction, &QAction::triggered, this, &ViewerWindow::close);
   connect(aboutAction, &QAction::triggered, this, &ViewerWindow::showAbout);
   connect(canvas, &CanvasWidget::selectedNodeChanged, this, &ViewerWindow::updateSelection);
+  connect(canvas, &CanvasWidget::requestDeletePath, this, &ViewerWindow::deletePath);
   connect(colorMappingCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
           this, &ViewerWindow::changeColorMapping);
 
@@ -187,4 +191,65 @@ void ViewerWindow::updateSelection(TreeNode *node) {
 
 void ViewerWindow::showError(const QString &message) {
   QMessageBox::critical(this, tr("Error"), message);
+}
+
+void ViewerWindow::deletePath(const QString &path) {
+  const QString cleaned = QDir::cleanPath(path);
+  if (cleaned.isEmpty()) {
+    showError(tr("Nothing to delete."));
+    return;
+  }
+
+  if (!QDir::isAbsolutePath(cleaned)) {
+    showError(tr("Refusing to delete a relative path: %1").arg(cleaned));
+    return;
+  }
+
+  if (cleaned == QDir::rootPath()) {
+    showError(tr("Refusing to delete the root directory."));
+    return;
+  }
+
+  QFileInfo info(cleaned);
+  const bool isSymLink = info.isSymLink();
+  const bool exists = info.exists() || isSymLink;
+  if (!exists) {
+    showError(tr("Path not found: %1").arg(cleaned));
+    return;
+  }
+
+  QString prompt;
+  if (isSymLink) {
+    prompt = tr("Delete symlink \"%1\"?").arg(cleaned);
+  } else if (info.isDir()) {
+    prompt = tr("Delete folder \"%1\" and its contents?").arg(cleaned);
+  } else {
+    prompt = tr("Delete file \"%1\"?").arg(cleaned);
+  }
+
+  QMessageBox::StandardButton reply = QMessageBox::warning(
+      this,
+      tr("Delete"),
+      prompt,
+      QMessageBox::Yes | QMessageBox::Cancel,
+      QMessageBox::Cancel);
+
+  if (reply != QMessageBox::Yes) {
+    return;
+  }
+
+  bool ok = false;
+  if (isSymLink || info.isFile()) {
+    ok = QFile::remove(cleaned);
+  } else if (info.isDir()) {
+    QDir dir(cleaned);
+    ok = dir.removeRecursively();
+  }
+
+  if (!ok) {
+    showError(tr("Failed to delete: %1").arg(cleaned));
+    return;
+  }
+
+  statusBar()->showMessage(tr("Deleted: %1").arg(cleaned));
 }

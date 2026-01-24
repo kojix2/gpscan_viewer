@@ -30,6 +30,7 @@ public:
 
 signals:
   void selectedNodeChanged(TreeNode *node);
+  void requestDeletePath(const QString &path);
 
 protected:
   void paintEvent(QPaintEvent *event) override;
