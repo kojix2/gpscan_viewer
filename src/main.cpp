@@ -8,15 +8,13 @@
 #include "ViewerWindow.h"
 
 int main(int argc, char *argv[]) {
-  auto setupParser = []() {
-    QCommandLineParser parser;
+  auto setupParser = [](QCommandLineParser &parser) {
     parser.setApplicationDescription(
         QObject::tr("Yet another viewer for GrandPerspective scan data."));
     parser.addHelpOption();
     parser.addVersionOption();
     parser.addPositionalArgument(QObject::tr("file"),
                                  QObject::tr("Path to .gpscan or .xml file."));
-    return parser;
   };
 
   bool wantsHelp = false;
@@ -40,7 +38,8 @@ int main(int argc, char *argv[]) {
         QStringLiteral(GPSCAN_VIEWER_VERSION));
 #endif
 
-    QCommandLineParser parser = setupParser();
+    QCommandLineParser parser;
+    setupParser(parser);
     parser.process(app);
 
     if (wantsHelp) {
@@ -60,7 +59,8 @@ int main(int argc, char *argv[]) {
       QStringLiteral(GPSCAN_VIEWER_VERSION));
 #endif
 
-  QCommandLineParser parser = setupParser();
+  QCommandLineParser parser;
+  setupParser(parser);
   parser.process(app);
 
   ViewerWindow window;
