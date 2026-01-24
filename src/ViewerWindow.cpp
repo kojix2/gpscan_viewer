@@ -181,16 +181,17 @@ void ViewerWindow::showAbout() {
       QStringLiteral("https://grandperspectiv.sourceforge.net/");
   const QString qtUrl = QStringLiteral("https://www.qt.io/");
   const QString aboutText =
-      tr("Qt-based minimal viewer for GrandPerspective scan data "
-         "(XML/gpscan).") +
+      tr("Yet another viewer for GrandPerspective scan data.") +
+      QStringLiteral("<br>") + tr("Built with Qt.") +
       QStringLiteral("<br><br>") + tr("Version: %1").arg(version) +
       QStringLiteral("<br>") +
       tr("Repository: <a href=\"%1\">%1</a>").arg(repoUrl) +
+      QStringLiteral("<br>") + tr("License: GPL-2.0-or-later") +
       QStringLiteral("<br><br>") +
       tr("Acknowledgements: Based on the macOS app GrandPerspective by Erwin "
          "Bonsma.") +
       QStringLiteral("<br>") +
-      tr("GrandPerspective: <a href=\"%1\">%1</a>").arg(grandPerspectiveUrl) +
+      tr("<a href=\"%1\">%1</a>").arg(grandPerspectiveUrl) +
       QStringLiteral("<br>") + tr("License: GPL-2.0-or-later");
   box.setTextFormat(Qt::RichText);
   box.setText(aboutText);
