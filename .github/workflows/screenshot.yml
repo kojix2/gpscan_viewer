@@ -24,7 +24,7 @@ jobs:
           sudo apt update
           sudo apt install -y \
             cmake g++ qt6-base-dev zlib1g-dev \
-            xvfb imagemagick
+            xvfb scrot xdotool openbox
 
       - name: Configure CMake
         run: cmake -S . -B build
@@ -43,21 +43,43 @@ jobs:
         run: |
           # gpscan does not cross filesystem boundaries by default.
           # This keeps /proc, /sys, /dev, /run (separate mounts) out of the scan.
-          sudo timeout 15m ./gpscan --force --output scan.gpscan /
+          sudo timeout 15m ./gpscan --quiet --force --output scan.gpscan /
           ls -lh scan.gpscan
 
       - name: Render screenshot (headless)
         run: |
-          # Run the viewer, then capture the Xvfb screen.
-          xvfb-run -a -s "-screen 0 1600x900x24" bash -lc '
-            set -euo pipefail
-            timeout 30s ./build/gpscan_viewer scan.gpscan &
-            pid=$!
-            sleep 4
-            import -window root root.png
-            kill "$pid" >/dev/null 2>&1 || true
-            wait "$pid" >/dev/null 2>&1 || true
-          '
+          # Start Xvfb, a window manager, launch the viewer, wait for window, then capture it.
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1600x900x24 &
+          sleep 1
+          openbox &
+          sleep 1
+
+          ./build/gpscan_viewer scan.gpscan &
+          pid=$!
+
+          # Wait for the window to appear (up to 30s)
+          for i in $(seq 1 30); do
+            if xdotool search --name "gpscan_viewer" >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+
+          sleep 3  # Let it fully render
+
+          # Capture just the viewer window
+          win_id=$(xdotool search --name "gpscan_viewer" | head -1)
+          if [ -n "$win_id" ]; then
+            scrot -w "$win_id" root.png
+          else
+            echo "Window not found, capturing entire screen"
+            scrot root.png
+          fi
+
+          kill "$pid" >/dev/null 2>&1 || true
+          wait "$pid" >/dev/null 2>&1 || true
+
           test -s root.png
           ls -lh root.png
 
