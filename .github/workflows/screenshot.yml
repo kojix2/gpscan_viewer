@@ -1,0 +1,90 @@
+name: Screenshot
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshot-ubuntu:
+    name: Generate screenshot on Ubuntu
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            cmake g++ qt6-base-dev zlib1g-dev \
+            xvfb imagemagick
+
+      - name: Configure CMake
+        run: cmake -S . -B build
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Download gpscan
+        run: |
+          curl -L -o gpscan.tar.gz https://github.com/kojix2/gpscan/releases/download/v0.1.3/gpscan-x86_64-unknown-linux-musl.tar.gz
+          tar -xzf gpscan.tar.gz
+          chmod +x gpscan
+          ./gpscan --version
+
+      - name: Scan /
+        run: |
+          # gpscan does not cross filesystem boundaries by default.
+          # This keeps /proc, /sys, /dev, /run (separate mounts) out of the scan.
+          sudo timeout 15m ./gpscan --force --output scan.gpscan /
+          ls -lh scan.gpscan
+
+      - name: Render screenshot (headless)
+        run: |
+          # Run the viewer, then capture the Xvfb screen.
+          xvfb-run -a -s "-screen 0 1600x900x24" bash -lc '
+            set -euo pipefail
+            timeout 30s ./build/gpscan_viewer scan.gpscan &
+            pid=$!
+            sleep 4
+            import -window root root.png
+            kill "$pid" >/dev/null 2>&1 || true
+            wait "$pid" >/dev/null 2>&1 || true
+          '
+          test -s root.png
+          ls -lh root.png
+
+      - name: Publish screenshot branch
+        run: |
+          set -euo pipefail
+
+          tmp_dir="$(mktemp -d)"
+          cp root.png "$tmp_dir/root.png"
+          date -u +"Generated at %Y-%m-%dT%H:%M:%SZ" > "$tmp_dir/GENERATED.txt"
+
+          git config user.name "github-actions[bot]"
+          # 41898282 is the numeric user id of github-actions[bot].
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git switch --orphan screenshot
+          git reset --hard
+          git clean -fdx
+
+          cp "$tmp_dir/root.png" ./root.png
+          cp "$tmp_dir/GENERATED.txt" ./GENERATED.txt
+          git add root.png GENERATED.txt
+
+          if git diff --cached --quiet; then
+            echo "No changes to screenshot."
+            exit 0
+          fi
+
+          git commit -m "Update screenshot"
+          git push --force origin HEAD:screenshot

@@ -2,6 +2,8 @@
 
 [![Build](https://github.com/kojix2/gpscan_viewer/actions/workflows/build.yml/badge.svg)](https://github.com/kojix2/gpscan_viewer/actions/workflows/build.yml)
 
+![Screenshot](https://raw.githubusercontent.com/kojix2/gpscan_viewer/screenshot/root.png)
+
 - Unofficial Qt viewer for [GrandPerspective](https://grandperspectiv.sourceforge.net/) compatible scan XML files
 - Works with XML produced by [gpscan](https://github.com/kojix2/gpscan)
 - License: GPL (see [COPYING.txt](COPYING.txt))
