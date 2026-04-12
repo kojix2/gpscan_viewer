@@ -28,7 +28,7 @@ jobs:
         run: ctest --test-dir build --output-on-failure
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gpscan_viewer-ubuntu
           path: build/gpscan_viewer
