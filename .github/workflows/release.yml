@@ -1,0 +1,171 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y cmake g++ qt6-base-dev zlib1g-dev rpm
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Create packages
+        run: cmake --install build --prefix build/install && cd build && cpack
+
+      - name: Upload DEB artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-deb
+          path: build/gpscan_viewer-*.deb
+
+      - name: Upload RPM artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: linux-rpm
+          path: build/gpscan_viewer-*.rpm
+
+  build-macos:
+    name: Build on macOS
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          brew install cmake qt6 zlib
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+      - name: Create app bundle
+        run: |
+          cmake --install build --prefix build/install
+          mkdir -p build/dist/gpscan_viewer.app/Contents/MacOS
+          mkdir -p build/dist/gpscan_viewer.app/Contents/Resources
+          cp build/install/bin/gpscan_viewer build/dist/gpscan_viewer.app/Contents/MacOS/
+          cat > build/dist/gpscan_viewer.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleDevelopmentRegion</key>
+              <string>en</string>
+              <key>CFBundleExecutable</key>
+              <string>gpscan_viewer</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.github.kojix2.gpscan-viewer</string>
+              <key>CFBundleInfoDictionaryVersion</key>
+              <string>6.0</string>
+              <key>CFBundleName</key>
+              <string>gpscan_viewer</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+          </dict>
+          </plist>
+          EOF
+
+      - name: Create DMG
+        run: |
+          cd build/dist
+          hdiutil create -volname "gpscan_viewer" -srcfolder . -ov -format UDZO gpscan_viewer.dmg
+          mv gpscan_viewer.dmg ../
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-dmg
+          path: build/gpscan_viewer.dmg
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          choco install cmake -y
+          choco install qt6 -y
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure --config Release
+
+      - name: Create distribution
+        run: |
+          cmake --install build --prefix build/install --config Release
+          mkdir build/dist
+          copy build/install/bin/gpscan_viewer.exe build/dist/
+          copy COPYING.txt build/dist/
+          copy README.md build/dist/
+          Compress-Archive -Path build/dist -DestinationPath build/gpscan_viewer-windows.zip
+
+      - name: Upload Windows artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: windows-zip
+          path: build/gpscan_viewer-windows.zip
+
+  create-release:
+    name: Create Release
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v7
+
+      - name: Display structure of downloaded files
+        run: ls -la -R
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            linux-deb/gpscan_viewer-*.deb
+            linux-rpm/gpscan_viewer-*.rpm
+            macos-dmg/gpscan_viewer.dmg
+            windows-zip/gpscan_viewer-windows.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
